@@ -1,0 +1,100 @@
+From 51cf76acb55aa933212c9ac78176835e1b12c7e6 Mon Sep 17 00:00:00 2001
+From: Noriko Hosoi <nhosoi@momo7.localdomain>
+Date: Fri, 25 May 2018 11:09:46 -0700
+Subject: [PATCH] Bug 1591493 - add support for array item deletion
+
+Adding "void fjson_object_array_del_idx(struct fjson_object *jso, int idx)",
+which deletes the idx-th element in the array type object.
+
+(cherry picked from commit e32df78fc68a4ae881681b5f845967edd6b86004 -- https://github.com/rsyslog/libfastjson)
+---
+ arraylist.c   | 16 ++++++++++++++++
+ arraylist.h   |  3 +++
+ json_object.c |  8 ++++++++
+ json_object.h |  3 +++
+ 4 files changed, 30 insertions(+)
+
+diff --git a/arraylist.c b/arraylist.c
+index 210b5c5..fc8dfe1 100644
+--- a/arraylist.c
++++ b/arraylist.c
+@@ -87,6 +87,22 @@ array_list_add(struct array_list *arr, void *data)
+ 	return array_list_put_idx(arr, arr->length, data);
+ }
+ 
++/*
++ * Deleting the idx-th element in the array_list.
++ */
++void
++array_list_del_idx(struct array_list *const arr, const int idx)
++{
++	if (idx < 0 || idx >= arr->length) {
++		return;
++	}
++	if(arr->array[idx]) arr->free_fn(arr->array[idx]);
++	if (--arr->length > idx) {
++		memmove(arr->array + idx, arr->array + idx + 1, (arr->length - idx) * sizeof(void *));
++	}
++	return;
++}
++
+ /* work around wrong compiler message: GCC and clang do
+  * not handle sort_fn correctly if -Werror is given.
+  */
+diff --git a/arraylist.h b/arraylist.h
+index 4b0f9e8..54ddad4 100644
+--- a/arraylist.h
++++ b/arraylist.h
+@@ -41,6 +41,9 @@ array_list_put_idx(struct array_list *al, int i, void *data);
+ extern int
+ array_list_add(struct array_list *al, void *data);
+ 
++extern void
++array_list_del_idx(struct array_list *const arr, const int idx);
++
+ extern int
+ array_list_length(struct array_list *al);
+ 
+diff --git a/json_object.c b/json_object.c
+index 56e8df6..42e516f 100644
+--- a/json_object.c
++++ b/json_object.c
+@@ -1053,6 +1053,14 @@ struct fjson_object* fjson_object_array_get_idx(struct fjson_object *jso,
+ 	return (struct fjson_object*)array_list_get_idx(jso->o.c_array, idx);
+ }
+ 
++/*
++ * Deleting the idx-th element in the array type object.
++ */
++void fjson_object_array_del_idx(struct fjson_object *jso, int idx)
++{
++	array_list_del_idx(jso->o.c_array, idx);
++}
++
+ int fjson_object_get_member_count(struct fjson_object *jso)
+ {
+ 	return jso->o.c_obj.nelem;
+diff --git a/json_object.h b/json_object.h
+index 55ee177..80a2075 100644
+--- a/json_object.h
++++ b/json_object.h
+@@ -469,6 +469,8 @@ extern int fjson_object_array_put_idx(struct fjson_object *obj, int idx,
+ extern struct fjson_object* fjson_object_array_get_idx(struct fjson_object *obj,
+ 						     int idx);
+ 
++extern void fjson_object_array_del_idx(struct fjson_object *jso, int idx);
++
+ /* fjson_bool type methods */
+ 
+ /** Create a new empty fjson_object of type fjson_type_boolean
+@@ -720,6 +722,7 @@ typedef struct fjson_tokener fjson_tokener;
+ #define json_object_get_int64 fjson_object_get_int64
+ #define json_object_get_string_len fjson_object_get_string_len
+ #define json_object_get_member_count fjson_object_get_member_count
++#define json_object_array_del_idx fjson_object_array_del_idx
+ 
+ 
+ #endif
+-- 
+2.14.4
+

@@ -1,6 +1,6 @@
 Name:		libfastjson
 Version:	0.99.4
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	A JSON implementation in C
 License:	MIT
 URL:		https://github.com/rsyslog/libfastjson
@@ -8,6 +8,7 @@ Source0:	http://download.rsyslog.com/libfastjson/libfastjson-%{version}.tar.gz
 
 # 1421612 - New defect found in libfastjson-0.99.4-1.el7
 Patch0: libfastjson-0.99.4-rhbz1421612-nullptr-guard.patch
+Patch1: 0001-Bug-1591493-add-support-for-array-item-deletion.patch
 
 %description
 LIBFASTJSON implements a reference counting object
@@ -28,6 +29,7 @@ developing applications that use libfastjson.
 %prep
 %setup -q
 %patch0 -p1
+%patch1 -p1
 
 for doc in ChangeLog; do
  iconv -f iso-8859-1 -t utf8 $doc > $doc.new &&
@@ -62,6 +64,9 @@ make V=1 check
 %{_libdir}/pkgconfig/libfastjson.pc
 
 %changelog
+* Fri Jun 22 2018 Noriko Hosoi <nhosoi@redhat.com> - 0.99.4-3
+  Resolves: #1591493 - add support for array item deletion
+
 * Tue Mar 07 2017 Daniel Kopecek <dkopecek@redhat.com> - 0.99.4-2
 - Fix defect found by clang-analyzer
   Resolves: #1421612
