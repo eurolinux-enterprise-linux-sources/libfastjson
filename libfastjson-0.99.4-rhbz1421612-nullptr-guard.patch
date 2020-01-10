@@ -1,0 +1,28 @@
+From 8793b9a1bda1d6e182a1118a6f1a0688f530a545 Mon Sep 17 00:00:00 2001
+From: Jiri Vymazal <jvymazal@redhat.com>
+Date: Thu, 2 Mar 2017 12:35:37 +0100
+Subject: [PATCH] add nullptr guard
+
+---
+ json_object.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/json_object.c b/json_object.c
+index b01782e..f8fc41b 100644
+--- a/json_object.c
++++ b/json_object.c
+@@ -201,9 +201,11 @@ int fjson_object_put(struct fjson_object *jso)
+ 
+ static void fjson_object_generic_delete(struct fjson_object* jso)
+ {
+-	printbuf_free(jso->_pb);
+-	DESTROY_ATOMIC_HELPER_MUT(jso->_mut_ref_count);
+-	free(jso);
++	if (jso) {
++		printbuf_free(jso->_pb);
++		DESTROY_ATOMIC_HELPER_MUT(jso->_mut_ref_count);
++		free(jso);
++	}
+ }
+ 
+ static struct fjson_object* fjson_object_new(const enum fjson_type o_type)
